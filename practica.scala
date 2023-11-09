@@ -1,6 +1,7 @@
 // Databricks notebook source
 import org.apache.spark.sql.Column
 import org.apache.spark.sql.functions._
+import org.apache.spark.sql.expressions.Window
 
 // COMMAND ----------
 
@@ -51,7 +52,7 @@ import org.apache.spark.sql.functions._
 
 // COMMAND ----------
 
-val df1 = spark.read.option("delimiter", ",").option("header", "true").option("inferSchema", "true").csv("/FileStore/shared_uploads/alejandro.taboada.galdo@outlook.es/world_happiness_report.csv")
+val df1 = spark.read.option("delimiter", ",").option("header", "true").option("inferSchema", "true").csv("/FileStore/world_happiness_report.csv")
 display(df1)
 
 // COMMAND ----------
@@ -68,7 +69,7 @@ filtered_df1.show()
 
 // COMMAND ----------
 
-val df2 = spark.read.option("delimiter", ",").option("header", "true").csv("/FileStore/shared_uploads/alejandro.taboada.galdo@outlook.es/world_happiness_report_2021.csv")
+val df2 = spark.read.option("delimiter", ",").option("header", "true").csv("/FileStore//world_happiness_report_2021.csv")
 display(df2)
 
 // COMMAND ----------
@@ -107,4 +108,18 @@ display(master_dataframe.filter(col("Year") === 2021).orderBy(desc("Ladder")).li
 // COMMAND ----------
 
 val df2021 = master_dataframe.filter(col("Year") === 2021)
-display(df2021.groupBy("Continent").agg(max("Ladder") as "Ladder"))
+val ventana = Window.partitionBy("Continent").orderBy(desc("Ladder"))
+val dfConRanking = df2021.withColumn("Ranking", rank().over(ventana))
+val paisesMasFelices = dfConRanking.filter(col("Ranking") === 1)
+display(paisesMasFelices)
+
+// COMMAND ----------
+
+// MAGIC %md
+// MAGIC ### Pregunta 3
+// MAGIC ¿Cuál es el país que más veces ocupó el primer lugar en todos los años?
+
+// COMMAND ----------
+
+val df3 = master_dataframe.groupBy("Year").agg(max("Ladder"))
+display(df3)
