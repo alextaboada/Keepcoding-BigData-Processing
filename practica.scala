@@ -109,9 +109,8 @@ display(master_dataframe.filter(col("Year") === 2021).orderBy(desc("Ladder")).li
 
 val df2021 = master_dataframe.filter(col("Year") === 2021)
 val ventana = Window.partitionBy("Continent").orderBy(desc("Ladder"))
-val dfConRanking = df2021.withColumn("Ranking", rank().over(ventana))
-val paisesMasFelices = dfConRanking.filter(col("Ranking") === 1)
-display(paisesMasFelices)
+val df2 = df2021.withColumn("Ranking", rank().over(ventana)).filter(col("Ranking") === 1).select("Continent","Country","Ladder")
+display(df2)
 
 // COMMAND ----------
 
@@ -121,5 +120,20 @@ display(paisesMasFelices)
 
 // COMMAND ----------
 
-val df3 = master_dataframe.groupBy("Year").agg(max("Ladder"))
-display(df3)
+val ventana = Window.partitionBy("Year").orderBy(desc("Ladder"))
+val df3 = master_dataframe.withColumn("Ranking", rank().over(ventana)).filter(col("Ranking") === 1).select("Year","Country","Ladder")
+display(df3.groupBy("Country").agg(count("Country") as "Nveces").orderBy(desc("Nveces")).limit(1))
+
+// COMMAND ----------
+
+// MAGIC %md
+// MAGIC ### Pregunta 4
+// MAGIC ¿Qué puesto de Felicidad tiene el país con mayor GDP del 2020?
+
+// COMMAND ----------
+
+display(master_dataframe)
+
+// COMMAND ----------
+
+
