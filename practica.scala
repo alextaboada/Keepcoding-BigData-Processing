@@ -1,6 +1,7 @@
 // Databricks notebook source
 import org.apache.spark.sql.Column
 import org.apache.spark.sql.functions._
+import org.apache.spark.sql.expressions.Window
 
 // COMMAND ----------
 
@@ -51,7 +52,7 @@ import org.apache.spark.sql.functions._
 
 // COMMAND ----------
 
-val df1 = spark.read.option("delimiter", ",").option("header", "true").option("inferSchema", "true").csv("/FileStore/shared_uploads/alejandro.taboada.galdo@outlook.es/world_happiness_report.csv")
+val df1 = spark.read.option("delimiter", ",").option("header", "true").option("inferSchema", "true").csv("/FileStore/world_happiness_report.csv")
 display(df1)
 
 // COMMAND ----------
@@ -68,7 +69,7 @@ filtered_df1.show()
 
 // COMMAND ----------
 
-val df2 = spark.read.option("delimiter", ",").option("header", "true").csv("/FileStore/shared_uploads/alejandro.taboada.galdo@outlook.es/world_happiness_report_2021.csv")
+val df2 = spark.read.option("delimiter", ",").option("header", "true").csv("/FileStore//world_happiness_report_2021.csv")
 display(df2)
 
 // COMMAND ----------
@@ -107,4 +108,32 @@ display(master_dataframe.filter(col("Year") === 2021).orderBy(desc("Ladder")).li
 // COMMAND ----------
 
 val df2021 = master_dataframe.filter(col("Year") === 2021)
-display(df2021.groupBy("Continent").agg(max("Ladder") as "Ladder"))
+val ventana = Window.partitionBy("Continent").orderBy(desc("Ladder"))
+val df2 = df2021.withColumn("Ranking", rank().over(ventana)).filter(col("Ranking") === 1).select("Continent","Country","Ladder")
+display(df2)
+
+// COMMAND ----------
+
+// MAGIC %md
+// MAGIC ### Pregunta 3
+// MAGIC ¿Cuál es el país que más veces ocupó el primer lugar en todos los años?
+
+// COMMAND ----------
+
+val ventana = Window.partitionBy("Year").orderBy(desc("Ladder"))
+val df3 = master_dataframe.withColumn("Ranking", rank().over(ventana)).filter(col("Ranking") === 1).select("Year","Country","Ladder")
+display(df3.groupBy("Country").agg(count("Country") as "Nveces").orderBy(desc("Nveces")).limit(1))
+
+// COMMAND ----------
+
+// MAGIC %md
+// MAGIC ### Pregunta 4
+// MAGIC ¿Qué puesto de Felicidad tiene el país con mayor GDP del 2020?
+
+// COMMAND ----------
+
+display(master_dataframe)
+
+// COMMAND ----------
+
+
